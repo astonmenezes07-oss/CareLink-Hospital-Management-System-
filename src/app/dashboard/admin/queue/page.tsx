@@ -17,6 +17,7 @@ export default function QueueManagement() {
   const [editScore, setEditScore] = useState(50);
   const [editLevel, setEditLevel] = useState<'high' | 'medium' | 'low'>('medium');
   const [now, setNow] = useState(Date.now());
+  const [toastMessage, setToastMessage] = useState('');
 
   // --- Add Emergency Patient State ---
   const [showAddPanel, setShowAddPanel] = useState(false);
@@ -81,8 +82,13 @@ export default function QueueManagement() {
     load();
   };
 
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 5000);
+  };
+
   const markInProgress = (appointmentId: string) => {
-    alert("The Patient is being treated");
+    showToast("The Patient is being treated");
     updateAppointment(appointmentId, { status: 'in_progress' });
     const pq = loadQueue();
     const all = pq.serialise();
@@ -95,7 +101,7 @@ export default function QueueManagement() {
   };
 
   const markComplete = (appointmentId: string) => {
-    alert("The patient's treatment is completed");
+    showToast("The patient's treatment is completed");
     updateAppointment(appointmentId, { status: 'completed' });
     const pq = loadQueue();
     pq.remove(appointmentId);
@@ -104,7 +110,7 @@ export default function QueueManagement() {
   };
 
   const removeEntry = (appointmentId: string) => {
-    alert("The patient is removed from the queue");
+    showToast("The patient is removed from the queue");
     const pq = loadQueue();
     pq.remove(appointmentId);
     saveQueue(pq.serialise());
@@ -202,15 +208,11 @@ export default function QueueManagement() {
     const dept = getDepartment(entry.departmentId);
     const isEditing = editingId === entry.appointmentId;
 
-    // Live countdown logic
-    let diffMs = 0;
-    if (apt?.date && apt?.timeSlot && apt.timeSlot !== 'Emergency') {
-      const scheduledTime = new Date(apt.date + 'T' + apt.timeSlot.split(' ')[0] + ':00').getTime();
-      diffMs = scheduledTime - now;
-    } else {
-      const estimatedTimeMs = new Date(entry.checkInTime).getTime() + (entry.estimatedWaitTime * 60000);
-      diffMs = estimatedTimeMs - now;
-    }
+    // Live countdown logic based on queue position
+    // position 1 = 15 mins from checkInTime, position 2 = 30 mins, etc.
+    const expectedDurationMs = entry.position * 15 * 60000;
+    const estimatedTimeMs = new Date(entry.checkInTime).getTime() + expectedDurationMs;
+    const diffMs = estimatedTimeMs - now;
 
     const isOverdue = diffMs <= 0;
     const diffMinutes = Math.floor(Math.abs(diffMs) / 60000);
@@ -263,7 +265,7 @@ export default function QueueManagement() {
               {isInProgress && (
                 <button onClick={() => markComplete(entry.appointmentId)}
                   className="px-4 py-1.5 rounded-lg bg-green-500 text-xs font-bold text-white hover:bg-green-600 transition-all shadow-sm">
-                  Complete Treatment
+                  Completed Treatment
                 </button>
               )}
             </div>
@@ -306,9 +308,6 @@ export default function QueueManagement() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-text-primary">Queue Management</h1>
         <div className="flex items-center gap-2">
-          <button onClick={rebalance} className="px-3 py-2 rounded-xl bg-surface-secondary text-text-secondary text-xs font-medium hover:bg-surface-hover border border-border transition-all">
-            Rebalance
-          </button>
           <button
             onClick={() => { setShowAddPanel(!showAddPanel); setAddSuccess(''); }}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-sm ${showAddPanel ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-priority-high text-white hover:opacity-90'}`}
@@ -486,6 +485,14 @@ export default function QueueManagement() {
       </div>
 
       <p className="text-xs text-text-muted text-center mt-6">Auto-refreshes every 15 seconds</p>
+
+      {/* Stylish Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-primary border border-border shadow-lg shadow-black/5 rounded-2xl px-6 py-3 text-sm font-medium text-text-primary flex items-center gap-3 animate-fade-in z-50">
+          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-brand/10 text-brand text-xs">🔔</span>
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }
