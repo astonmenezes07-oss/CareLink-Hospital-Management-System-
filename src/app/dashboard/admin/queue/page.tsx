@@ -208,20 +208,7 @@ export default function QueueManagement() {
     const dept = getDepartment(entry.departmentId);
     const isEditing = editingId === entry.appointmentId;
 
-    // Live countdown logic
-    let diffMs = 0;
-    if (apt?.date && apt?.timeSlot && apt.timeSlot !== 'Emergency') {
-      const scheduledTime = new Date(apt.date + 'T' + apt.timeSlot.split(' ')[0] + ':00').getTime();
-      diffMs = scheduledTime - now;
-    } else {
-      const estimatedTimeMs = new Date(entry.checkInTime).getTime() + (entry.estimatedWaitTime * 60000);
-      diffMs = estimatedTimeMs - now;
-    }
-
-    const isOverdue = diffMs <= 0;
-    const diffMinutes = Math.floor(Math.abs(diffMs) / 60000);
-    const diffSeconds = Math.floor((Math.abs(diffMs) % 60000) / 1000);
-    const timerStr = `${isOverdue ? '-' : ''}${String(diffMinutes).padStart(2, '0')}:${String(diffSeconds).padStart(2, '0')}`;
+    const isOverdue = false;
 
     return (
       <div key={entry.appointmentId} className={`bg-white rounded-2xl border ${isOverdue && !isInProgress ? 'border-red-400 shadow-sm shadow-red-100' : 'border-border/50'} p-5 hover:shadow-sm transition-all`}>
@@ -243,9 +230,7 @@ export default function QueueManagement() {
               {!isInProgress && (
                 <>
                   <span className="text-xs text-text-muted">Score: {entry.priority.total}</span>
-                  <span className={`text-xs font-mono font-bold px-2 py-1 rounded-md ${isOverdue ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-surface-secondary text-text-secondary'}`}>
-                    {timerStr}
-                  </span>
+                  <span className="text-xs text-text-muted">• {entry.estimatedWaitTime}m wait</span>
                 </>
               )}
             </div>
