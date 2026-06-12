@@ -84,7 +84,7 @@ export default function QueueManagement() {
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 5000);
+    setTimeout(() => setToastMessage(''), 4000);
   };
 
   const markInProgress = (appointmentId: string) => {
@@ -208,11 +208,15 @@ export default function QueueManagement() {
     const dept = getDepartment(entry.departmentId);
     const isEditing = editingId === entry.appointmentId;
 
-    // Live countdown logic based on queue position
-    // position 1 = 15 mins from checkInTime, position 2 = 30 mins, etc.
-    const expectedDurationMs = entry.position * 15 * 60000;
-    const estimatedTimeMs = new Date(entry.checkInTime).getTime() + expectedDurationMs;
-    const diffMs = estimatedTimeMs - now;
+    // Live countdown logic
+    let diffMs = 0;
+    if (apt?.date && apt?.timeSlot && apt.timeSlot !== 'Emergency') {
+      const scheduledTime = new Date(apt.date + 'T' + apt.timeSlot.split(' ')[0] + ':00').getTime();
+      diffMs = scheduledTime - now;
+    } else {
+      const estimatedTimeMs = new Date(entry.checkInTime).getTime() + (entry.estimatedWaitTime * 60000);
+      diffMs = estimatedTimeMs - now;
+    }
 
     const isOverdue = diffMs <= 0;
     const diffMinutes = Math.floor(Math.abs(diffMs) / 60000);
@@ -488,7 +492,7 @@ export default function QueueManagement() {
 
       {/* Stylish Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-primary border border-border shadow-lg shadow-black/5 rounded-2xl px-6 py-3 text-sm font-medium text-text-primary flex items-center gap-3 animate-fade-in z-50">
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-surface-primary border border-border shadow-lg shadow-black/5 rounded-2xl px-6 py-3 text-sm font-medium text-text-primary flex items-center gap-3 animate-fade-in z-50">
           <span className="flex items-center justify-center w-6 h-6 rounded-full bg-brand/10 text-brand text-xs">🔔</span>
           {toastMessage}
         </div>
