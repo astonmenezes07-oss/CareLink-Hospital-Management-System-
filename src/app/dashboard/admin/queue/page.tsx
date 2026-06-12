@@ -160,6 +160,8 @@ export default function QueueManagement() {
       checkInTime: now,
       estimatedWaitTime: 5,
       position: 0,
+      date: new Date().toISOString().split('T')[0],
+      timeSlot: 'Emergency',
     });
 
     setAddSuccess(`${addForm.patientName.trim()} has been added to the queue with HIGH priority (Score: ${priority.total}).`);

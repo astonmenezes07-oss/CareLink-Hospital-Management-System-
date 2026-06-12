@@ -137,6 +137,8 @@ export interface QueueEntry {
   checkInTime: string;
   estimatedWaitTime: number;
   position: number;
+  date?: string;
+  timeSlot?: string;
 }
 
 // --- Notifications ---

@@ -19,8 +19,14 @@ export default function PatientAppointments() {
     setAppointments(getAppointmentsByPatient(s.userId));
   };
 
-  const upcoming = appointments.filter((a) => ['pending', 'confirmed', 'in_queue', 'in_progress'].includes(a.status));
-  const history = appointments.filter((a) => ['completed', 'cancelled'].includes(a.status));
+  const sortApts = (apts: Appointment[]) => apts.sort((a, b) => {
+    const timeA = new Date(a.date + 'T' + a.timeSlot.split(' ')[0] + ':00').getTime();
+    const timeB = new Date(b.date + 'T' + b.timeSlot.split(' ')[0] + ':00').getTime();
+    return timeA - timeB;
+  });
+
+  const upcoming = sortApts(appointments.filter((a) => ['pending', 'confirmed', 'in_queue', 'in_progress'].includes(a.status)));
+  const history = sortApts(appointments.filter((a) => ['completed', 'cancelled'].includes(a.status)));
   const list = tab === 'upcoming' ? upcoming : history;
 
   const cancel = (id: string) => {

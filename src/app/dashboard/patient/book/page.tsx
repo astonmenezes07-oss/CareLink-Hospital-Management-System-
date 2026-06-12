@@ -98,6 +98,8 @@ export default function BookAppointment() {
       checkInTime: now,
       estimatedWaitTime: 15,
       position: 0,
+      date: selectedDate,
+      timeSlot: selectedTime,
     });
 
     addNotification({

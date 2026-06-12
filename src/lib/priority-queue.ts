@@ -1,112 +1,120 @@
 // ============================================================
-// CareLink — Max-Heap Priority Queue
+// CareLink — Chronological Queue (Date & Time Priority)
 // ============================================================
-// Patients with HIGHER priority scores are extracted first.
+// Patients are sorted primarily by Date and Time.
+// If times are the same, they are sorted by Priority Score.
 
 import { QueueEntry } from '@/types';
 
 export class PriorityQueue {
-  private heap: QueueEntry[] = [];
+  private queue: QueueEntry[] = [];
 
   get size(): number {
-    return this.heap.length;
+    return this.queue.length;
   }
 
   get isEmpty(): boolean {
-    return this.heap.length === 0;
+    return this.queue.length === 0;
   }
 
-  /** Return a shallow copy of all entries sorted by descending priority. */
+  private compare(a: QueueEntry, b: QueueEntry): number {
+    // Helper to get a comparable timestamp
+    const getTime = (entry: QueueEntry) => {
+      if (entry.timeSlot === 'Emergency') {
+        // Emergencies get pushed to the top of their date
+        return new Date(entry.date + 'T00:00:00').getTime() - 1; 
+      }
+      if (entry.date && entry.timeSlot) {
+        // e.g., "09:00 - 09:30" -> "09:00"
+        const timeStr = entry.timeSlot.split(' ')[0];
+        return new Date(entry.date + 'T' + timeStr + ':00').getTime();
+      }
+      return new Date(entry.checkInTime).getTime();
+    };
+
+    const timeA = getTime(a);
+    const timeB = getTime(b);
+
+    if (timeA !== timeB) {
+      return timeA - timeB; // smaller time (earlier) comes first
+    }
+    
+    // If times are identical, fallback to priority total (higher score = first)
+    return b.priority.total - a.priority.total;
+  }
+
+  /** Return a shallow copy of all entries sorted. */
   getAll(): QueueEntry[] {
-    return [...this.heap].sort(
-      (a, b) => b.priority.total - a.priority.total
-    );
+    return [...this.queue];
   }
 
-  /** Insert a new entry and restore heap property. */
+  /** Insert a new entry and sort. */
   insert(entry: QueueEntry): void {
-    this.heap.push(entry);
-    this.bubbleUp(this.heap.length - 1);
-    this.recalcPositions();
+    this.queue.push(entry);
+    this.rebalance();
   }
 
-  /** Remove and return the highest-priority entry. */
+  /** Remove and return the highest-priority entry (first element). */
   extractMax(): QueueEntry | null {
     if (this.isEmpty) return null;
-    const max = this.heap[0];
-    const last = this.heap.pop()!;
-    if (!this.isEmpty) {
-      this.heap[0] = last;
-      this.sinkDown(0);
-    }
+    const first = this.queue.shift()!;
     this.recalcPositions();
-    return max;
+    return first;
   }
 
   /** Peek at the highest-priority entry without removing it. */
   peek(): QueueEntry | null {
-    return this.isEmpty ? null : this.heap[0];
+    return this.isEmpty ? null : this.queue[0];
   }
 
-  /** Update priority for a specific appointment and re-heapify. */
+  /** Update priority for a specific appointment and re-sort. */
   updatePriority(
     appointmentId: string,
     newScore: number,
     newLevel: QueueEntry['priority']['level']
   ): boolean {
-    const idx = this.heap.findIndex(
+    const idx = this.queue.findIndex(
       (e) => e.appointmentId === appointmentId
     );
     if (idx === -1) return false;
 
-    this.heap[idx].priority = {
-      ...this.heap[idx].priority,
+    this.queue[idx].priority = {
+      ...this.queue[idx].priority,
       total: newScore,
       level: newLevel,
     };
 
-    // Could have gone up or down — do both safely.
-    this.bubbleUp(idx);
-    this.sinkDown(idx);
-    this.recalcPositions();
+    this.rebalance();
     return true;
   }
 
   /** Remove an entry by appointment ID. */
   remove(appointmentId: string): QueueEntry | null {
-    const idx = this.heap.findIndex(
+    const idx = this.queue.findIndex(
       (e) => e.appointmentId === appointmentId
     );
     if (idx === -1) return null;
 
-    const removed = this.heap[idx];
-    const last = this.heap.pop()!;
-    if (idx < this.heap.length) {
-      this.heap[idx] = last;
-      this.bubbleUp(idx);
-      this.sinkDown(idx);
-    }
+    const removed = this.queue.splice(idx, 1)[0];
     this.recalcPositions();
     return removed;
   }
 
-  /** Full rebalance — rebuild heap from scratch. */
+  /** Full rebalance — sort the array. */
   rebalance(): void {
-    for (let i = Math.floor(this.heap.length / 2) - 1; i >= 0; i--) {
-      this.sinkDown(i);
-    }
+    this.queue.sort(this.compare.bind(this));
     this.recalcPositions();
   }
 
   /** Load queue from serialised data. */
   load(entries: QueueEntry[]): void {
-    this.heap = [...entries];
+    this.queue = [...entries];
     this.rebalance();
   }
 
   /** Serialise for persistence. */
   serialise(): QueueEntry[] {
-    return [...this.heap];
+    return [...this.queue];
   }
 
   /** Get entries filtered by priority level. */
@@ -124,59 +132,9 @@ export class PriorityQueue {
     return Math.max(0, (position - 1) * 15);
   }
 
-  // ---- internal helpers ----
-
-  private bubbleUp(idx: number): void {
-    while (idx > 0) {
-      const parentIdx = Math.floor((idx - 1) / 2);
-      if (
-        this.heap[idx].priority.total <=
-        this.heap[parentIdx].priority.total
-      )
-        break;
-      [this.heap[idx], this.heap[parentIdx]] = [
-        this.heap[parentIdx],
-        this.heap[idx],
-      ];
-      idx = parentIdx;
-    }
-  }
-
-  private sinkDown(idx: number): void {
-    const length = this.heap.length;
-    while (true) {
-      let largest = idx;
-      const left = 2 * idx + 1;
-      const right = 2 * idx + 2;
-
-      if (
-        left < length &&
-        this.heap[left].priority.total >
-          this.heap[largest].priority.total
-      )
-        largest = left;
-
-      if (
-        right < length &&
-        this.heap[right].priority.total >
-          this.heap[largest].priority.total
-      )
-        largest = right;
-
-      if (largest === idx) break;
-
-      [this.heap[idx], this.heap[largest]] = [
-        this.heap[largest],
-        this.heap[idx],
-      ];
-      idx = largest;
-    }
-  }
-
-  /** Re-number queue positions based on current heap order. */
+  /** Re-number queue positions based on current order. */
   private recalcPositions(): void {
-    const sorted = this.getAll();
-    sorted.forEach((entry, i) => {
+    this.queue.forEach((entry, i) => {
       entry.position = i + 1;
       entry.estimatedWaitTime = this.estimateWaitTime(i + 1);
     });

@@ -80,6 +80,8 @@ export function initStore(): void {
         checkInTime: a.createdAt,
         estimatedWaitTime: (i + 1) * 15,
         position: i + 1,
+        date: a.date,
+        timeSlot: a.timeSlot,
       };
     });
 

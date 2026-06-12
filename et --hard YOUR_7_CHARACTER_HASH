@@ -1,0 +1,11 @@
+[33mdd64050[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Add zustand dependency for local store
+[33m66496c7[m Restore Phase 1 UI features using local mock data
+[33m285b5c6[m Add debug banner for RPC error
+[33m16ef624[m Revert admin panel to hardcoded login
+[33mc27d79d[m Fix Vercel 500 middleware error with native redirect
+[33m9e40420[m Fix login redirect to dashboard
+[33me39315d[m Fix middleware auth routing
+[33m254cccd[m Fix async auth middleware TS error
+[33mce05241[m Fix strict Doctor availability TS error
+[33m3043e27[m Phase 2: Complete migration to Supabase and Clerk
+[33m6203475[m[33m ([m[1;31morigin/master[m[33m)[m first commit
