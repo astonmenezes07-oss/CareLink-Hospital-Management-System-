@@ -17,7 +17,7 @@ version: "1.0.0"
    - 3.1 [Smart Triage & Priority Engine](#31-smart-triage--priority-engine)
    - 3.2 [Patient Portal](#32-patient-portal)
    - 3.3 [Admin Queue Management](#33-admin-queue-management)
-4. [Recent Modifications](#4-recent-modifications)
+4. [Admin Queue Refactor & Patient Seed Data](#4-admin-queue-refactor--patient-seed-data)
 5. [Deployment & Hosting Strategy](#5-deployment--hosting-strategy)
 6. [Future Roadmap](#6-future-roadmap)
 

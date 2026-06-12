@@ -85,7 +85,7 @@ export default function AdminAppointments() {
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
           className="px-3 py-2 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand/30">
           <option value="">All Status</option>
-          {['pending', 'confirmed', 'in_queue', 'in_progress', 'completed', 'cancelled'].map((s) => (
+          {['pending', 'confirmed', 'in_queue', 'completed', 'cancelled'].map((s) => (
             <option key={s} value={s}>{s.replace('_', ' ')}</option>
           ))}
         </select>
