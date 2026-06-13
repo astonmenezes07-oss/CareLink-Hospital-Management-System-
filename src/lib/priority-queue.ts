@@ -18,14 +18,17 @@ export class PriorityQueue {
   }
 
   private compare(a: QueueEntry, b: QueueEntry): number {
-    // Helper to get a comparable timestamp
+    // Primary Sort: Priority Score (Higher score = first)
+    if (a.priority.total !== b.priority.total) {
+      return b.priority.total - a.priority.total;
+    }
+
+    // Secondary Sort: Chronological (Earlier time = first)
     const getTime = (entry: QueueEntry) => {
       if (entry.timeSlot === 'Emergency') {
-        // Emergencies get pushed to the top of their date
         return new Date(entry.date + 'T00:00:00').getTime() - 1; 
       }
       if (entry.date && entry.timeSlot) {
-        // e.g., "09:00 - 09:30" -> "09:00"
         const timeStr = entry.timeSlot.split(' ')[0];
         return new Date(entry.date + 'T' + timeStr + ':00').getTime();
       }
@@ -35,12 +38,7 @@ export class PriorityQueue {
     const timeA = getTime(a);
     const timeB = getTime(b);
 
-    if (timeA !== timeB) {
-      return timeA - timeB; // smaller time (earlier) comes first
-    }
-    
-    // If times are identical, fallback to priority total (higher score = first)
-    return b.priority.total - a.priority.total;
+    return timeA - timeB;
   }
 
   /** Return a shallow copy of all entries sorted. */
